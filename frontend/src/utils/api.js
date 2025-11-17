@@ -27,15 +27,28 @@ async function handleResponse(response) {
   return response.json();
 }
 
-async function fetchWrapper(endpoint, options = {}) {
-  const headers = {
-    ...getAuthHeaders(),
-    ...options.headers,
-  };
+export async function fetchWrapper(endpoint, options = {}) {
+  try {
+    const response = await fetch(API_URL + endpoint, options);
 
-  const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
-  return handleResponse(response);
+    if (!response.ok) {
+      // Handle cases where backend returns HTML or text on error
+      const contentType = response.headers.get("Content-Type") || "";
+
+      if (!contentType.includes("application/json")) {
+        console.warn(`Non-JSON response at ${endpoint}: returning null`);
+        return null;
+      }
+    }
+
+    return await response.json();
+
+  } catch (error) {
+    console.error("Fetch failed:", error);
+    return null;
+  }
 }
+
 
 export const authApi = {
   login: (email, password) =>
@@ -53,6 +66,39 @@ export const authApi = {
     }),
 
   me: () => fetchWrapper('/auth/me/'),
+};
+
+export const conversionApi = {
+  getFormats: () =>
+    fetchWrapper('/conversions/formats'),
+
+  upload: (file, inputFormat, outputFormat) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('inputFormat', inputFormat);
+    formData.append('outputFormat', outputFormat);
+
+    return fetchWrapper('/conversions/upload/', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
+  getStatus: (jobId) =>
+    fetchWrapper(`/jobs/${jobId}/`),
+
+  listJobs: (params) =>
+    fetchWrapper('/jobs/', { params }),
+
+  downloadResult: (jobId) =>
+    fetchWrapper(`/jobs/${jobId}/download/`, {
+      responseType: 'blob',
+    }),
+
+  cancelJob: (jobId) =>
+    fetchWrapper(`/jobs/${jobId}/cancel/`, {
+      method: 'POST',
+    }),
 };
 
 export default fetchWrapper;

@@ -4,8 +4,8 @@ import { useAuthStore } from '../utils/authStore';
 import { authApi } from '../utils/api';
 import toast from 'react-hot-toast';
 import 'react-toastify/dist/ReactToastify.css';
-// import { MailIcon, LockClosedIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-import { Mail, Lock, User, Loader } from 'lucide-react';
+import { Mail, Lock, Loader } from 'lucide-react';
+
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,35 +19,29 @@ export default function RegisterPage() {
       toast.error('Please fill in all fields');
       return false;
     }
-
     if (password.length < 8) {
       toast.error('Password must be at least 8 characters');
       return false;
     }
-
     if (password !== confirmPassword) {
       toast.error('Passwords do not match');
       return false;
     }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       toast.error('Please enter a valid email');
       return false;
     }
-
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
-
     setLoading(true);
     try {
       const response = await authApi.register(email, password);
-      const { access, refresh, user } = response; // fetch wrapper returns JSON directly
+      const { access, refresh, user } = response;
       setAuth(access, refresh, user);
       toast.success('Account created successfully!');
       navigate('/dashboard');
@@ -60,44 +54,39 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-
-      <div className="card max-w-md w-full mx-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="card max-w-md w-full mx-4 bg-gray-800 shadow-2xl border border-gray-700">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-blue-600 mb-2">FileFoundry</h1>
-          <p className="text-gray-600">Create an Account</p>
+          <h1 className="text-4xl font-bold text-purple-500 mb-2">FileFoundry</h1>
+          <p className="text-gray-400">Create an Account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
+              <Mail className="absolute left-3 top-3 text-gray-500" size={20} />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="input pl-10"
+                className="input pl-10 bg-gray-700 text-gray-100 border-gray-600 focus:ring-purple-500 focus:border-purple-500"
                 disabled={loading}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 text-gray-400" size={20} />
+              <Lock className="absolute left-3 top-3 text-gray-500" size={20} />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="input pl-10"
+                className="input pl-10 bg-gray-700 text-gray-100 border-gray-600 focus:ring-purple-500 focus:border-purple-500"
                 disabled={loading}
               />
             </div>
@@ -105,17 +94,15 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm Password
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Confirm Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 text-gray-400" size={20} />
+              <Lock className="absolute left-3 top-3 text-gray-500" size={20} />
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="input pl-10"
+                className="input pl-10 bg-gray-700 text-gray-100 border-gray-600 focus:ring-purple-500 focus:border-purple-500"
                 disabled={loading}
               />
             </div>
@@ -124,17 +111,17 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
+            className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 bg-purple-600 hover:bg-purple-700"
           >
             {loading && <Loader className="animate-spin" size={20} />}
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
 
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-center text-gray-600 text-sm">
+        <div className="mt-6 pt-6 border-t border-gray-700">
+          <p className="text-center text-gray-400 text-sm">
             Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
+            <Link to="/login" className="text-purple-500 hover:text-purple-400 font-semibold">
               Sign in here
             </Link>
           </p>
