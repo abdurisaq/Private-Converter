@@ -57,7 +57,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
       <div className="card max-w-md w-full mx-4 bg-gray-800 shadow-2xl border border-gray-700">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-purple-500 mb-2">FileFoundry</h1>
+          <h1 className="text-4xl font-bold text-purple-500 mb-2">private-converter</h1>
           <p className="text-gray-400">Create an Account</p>
         </div>
 

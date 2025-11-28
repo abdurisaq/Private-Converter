@@ -70,3 +70,24 @@ def login(request):
             status=status.HTTP_401_UNAUTHORIZED
         )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_profile(request):
+    """Get current user profile"""
+    serializer = UserSerializer(request.user)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_storage(request):
+    """Get user storage info"""
+    user = request.user
+    return Response({
+        'quota': user.storage_quota,
+        'used': user.storage_used,
+        'available': user.storage_quota - user.storage_used,
+        'percentage': (user.storage_used / user.storage_quota * 100) if user.storage_quota > 0 else 0,
+    })

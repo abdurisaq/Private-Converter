@@ -18,7 +18,7 @@ export default function DashboardPage() {
     try {
       setLoading(true);
       const jobsResponse = await conversionApi.listJobs();
-      const allJobs = jobsResponse?.data?.results || [];
+      const allJobs = jobsResponse?.results || [];
 
       const completed = allJobs.filter(j => j.status === 'completed').length;
       const processing = allJobs.filter(j => j.status === 'processing').length;
@@ -142,7 +142,7 @@ export default function DashboardPage() {
       <div className="mt-8 p-6 bg-gradient-to-r from-purple-800 to-indigo-900 rounded-lg border border-gray-700 text-gray-100">
         <h3 className="font-semibold mb-2">Supported Formats</h3>
         <p className="text-gray-300 text-sm">
-          FileFoundry supports conversions for audio, video, images, documents, eBooks, PDFs, and archives.
+          private-converter supports conversions for audio, video, images, documents, eBooks, PDFs, and archives.
           Check the Convert page for all available format combinations.
         </p>
       </div>

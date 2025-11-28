@@ -16,7 +16,7 @@ export default function Layout() {
       {/* Sidebar */}
       <aside className="w-64 bg-gray-800 shadow-xl">
         <div className="p-6 border-b border-gray-700">
-          <h1 className="text-2xl font-bold text-purple-500">FileFoundry</h1>
+          <h1 className="text-2xl font-bold text-purple-500">private-converter</h1>
           <p className="text-gray-400 text-sm">File Conversion Service</p>
         </div>
 

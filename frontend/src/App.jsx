@@ -9,6 +9,8 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import Layout from './components/Layout';
 import { LogOut, Settings, Home, Upload, FileText } from 'lucide-react';
+import ConvertPage from './pages/ConvertPage';
+import JobsPage from './pages/JobsPage';
 
 function App() {
   const [count, setCount] = useState(0)
@@ -40,6 +42,8 @@ function App() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/convert" element={<ConvertPage />} />
+        <Route path="/jobs" element={<JobsPage />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>

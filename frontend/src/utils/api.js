@@ -28,26 +28,58 @@ async function handleResponse(response) {
 }
 
 export async function fetchWrapper(endpoint, options = {}) {
+  const authHeaders = getAuthHeaders();
+
+  // Merge headers
+  options.headers = {
+    ...authHeaders,
+    ...options.headers,
+  };
+
+  console.log('Request URL:', API_URL + endpoint);
+  console.log('Request options:', options);
+
+  const response = await fetch(API_URL + endpoint, options);
+
+  console.log('Response status:', response.status);
+  console.log('Response headers:', Array.from(response.headers.entries()));
+
+  // Clone response so we can read it for logging without consuming the body
+  const clone = response.clone();
+  let responseText;
   try {
-    const response = await fetch(API_URL + endpoint, options);
+    responseText = await clone.text();
+    console.log('Raw response body:', responseText);
+  } catch (err) {
+    console.warn('Failed to read response body:', err);
+  }
 
-    if (!response.ok) {
-      // Handle cases where backend returns HTML or text on error
-      const contentType = response.headers.get("Content-Type") || "";
+  const contentType = response.headers.get('content-type');
 
-      if (!contentType.includes("application/json")) {
-        console.warn(`Non-JSON response at ${endpoint}: returning null`);
-        return null;
+  if (!response.ok) {
+    let errorMessage = 'Request failed';
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        const errorData = JSON.parse(responseText);
+        errorMessage = errorData.detail || errorData.message || errorMessage;
+      } catch {
+        errorMessage = `Request failed (invalid JSON): ${responseText}`;
       }
     }
-
-    return await response.json();
-
-  } catch (error) {
-    console.error("Fetch failed:", error);
-    return null;
+    throw new Error(errorMessage);
   }
+
+  if (contentType && contentType.includes('application/octet-stream')) {
+    return response.blob();
+  }
+
+  if (contentType && contentType.includes('application/json')) {
+    return response.json();
+  }
+  return response.text();
 }
+
+
 
 
 export const authApi = {
@@ -70,7 +102,7 @@ export const authApi = {
 
 export const conversionApi = {
   getFormats: () =>
-    fetchWrapper('/conversions/formats'),
+    fetchWrapper('/conversions/formats/'),
 
   upload: (file, inputFormat, outputFormat) => {
     const formData = new FormData();
