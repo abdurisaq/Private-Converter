@@ -27,6 +27,12 @@ async function handleResponse(response) {
   return response.json();
 }
 
+function buildUrl(endpoint, params) {
+  if (!params) return API_URL + endpoint;
+  const query = new URLSearchParams(params).toString();
+  return query ? `${API_URL}${endpoint}?${query}` : API_URL + endpoint;
+}
+
 export async function fetchWrapper(endpoint, options = {}) {
   const authHeaders = getAuthHeaders();
 
@@ -36,23 +42,19 @@ export async function fetchWrapper(endpoint, options = {}) {
     ...options.headers,
   };
 
-  console.log('Request URL:', API_URL + endpoint);
+  const responseType = options.responseType;
+  delete options.responseType;
+
+  const url = buildUrl(endpoint, options.params);
+  delete options.params;
+
+  console.log('Request URL:', url);
   console.log('Request options:', options);
 
-  const response = await fetch(API_URL + endpoint, options);
+  const response = await fetch(url, options);
 
   console.log('Response status:', response.status);
   console.log('Response headers:', Array.from(response.headers.entries()));
-
-  // Clone response so we can read it for logging without consuming the body
-  const clone = response.clone();
-  let responseText;
-  try {
-    responseText = await clone.text();
-    console.log('Raw response body:', responseText);
-  } catch (err) {
-    console.warn('Failed to read response body:', err);
-  }
 
   const contentType = response.headers.get('content-type');
 
@@ -60,13 +62,18 @@ export async function fetchWrapper(endpoint, options = {}) {
     let errorMessage = 'Request failed';
     if (contentType && contentType.includes('application/json')) {
       try {
-        const errorData = JSON.parse(responseText);
+        const errorData = await response.json();
         errorMessage = errorData.detail || errorData.message || errorMessage;
       } catch {
-        errorMessage = `Request failed (invalid JSON): ${responseText}`;
+        const text = await response.text().catch(() => '');
+        errorMessage = `Request failed (invalid JSON): ${text}`;
       }
     }
     throw new Error(errorMessage);
+  }
+
+  if (responseType === 'blob') {
+    return response.blob();
   }
 
   if (contentType && contentType.includes('application/octet-stream')) {
@@ -76,7 +83,7 @@ export async function fetchWrapper(endpoint, options = {}) {
   if (contentType && contentType.includes('application/json')) {
     return response.json();
   }
-  return response.text();
+  return response.blob();
 }
 
 
@@ -107,8 +114,8 @@ export const conversionApi = {
   upload: (file, inputFormat, outputFormat) => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('inputFormat', inputFormat);
-    formData.append('outputFormat', outputFormat);
+    formData.append('input_format', inputFormat);
+    formData.append('output_format', outputFormat);
 
     return fetchWrapper('/conversions/upload/', {
       method: 'POST',
@@ -132,5 +139,57 @@ export const conversionApi = {
       method: 'POST',
     }),
 };
+
+export const processingApi = {
+  /** Upload a file for processing and let backend auto-detect type */
+  uploadFile: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return fetchWrapper('/processing/upload/', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
+  /** Ask backend: what operations are available for this file type?  
+      e.g. pdf → ["split", "merge", "compress", "rotate"] */
+  getOperations: (fileType) =>
+    fetchWrapper(`/processing/operations/?type=${encodeURIComponent(fileType)}`),
+
+  /** Generic operation trigger  
+      operation = "split" | "merge" | "compress" | etc. */
+  process: (operation, data) =>
+    fetchWrapper(`/processing/${operation}/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+
+  /** Poll processing job status */
+  getStatus: (jobId) =>
+    fetchWrapper(`/processing/jobs/${jobId}/`),
+
+  /** Download final processed file */
+  downloadResult: (jobId) =>
+    fetchWrapper(`/processing/jobs/${jobId}/download/`, {
+      responseType: 'blob',
+    }),
+
+  processUpload: (operation, formData) =>
+    fetchWrapper(`/processing/${operation}/`, {
+      method: 'POST',
+      body: formData,
+    }),
+
+    processPdf: (recipePayload) => {
+        return fetchWrapper('/processing/pdf/merge/', { // New endpoint
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(recipePayload),
+        });
+    },
+};
+
 
 export default fetchWrapper;

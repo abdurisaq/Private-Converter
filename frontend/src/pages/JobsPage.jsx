@@ -34,8 +34,8 @@ export default function JobsPage() {
   const handleDownload = async (jobId, filename) => {
     try {
       const response = await conversionApi.downloadResult(jobId);
-      // Create blob and download
-      const url = window.URL.createObjectURL(new Blob([response]));
+      const blob = response instanceof Blob ? response : new Blob([response]);
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', filename);

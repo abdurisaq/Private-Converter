@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileUp, Zap, Clock, CheckCircle } from 'lucide-react';
+import { FileUp, Zap, Clock, CheckCircle, Wand2 } from 'lucide-react';
 import { conversionApi } from '../utils/api';
 import { useAuthStore } from '../utils/authStore';
 
@@ -66,7 +66,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Main Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+        {/* Convert */}
         <Link className="card hover:shadow-lg transition-shadow cursor-pointer bg-gray-800 text-gray-100" to="/convert">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-700 rounded-lg">
@@ -79,6 +81,20 @@ export default function DashboardPage() {
           </div>
         </Link>
 
+        {/* Process */}
+        <Link className="card hover:shadow-lg transition-shadow cursor-pointer bg-gray-800 text-gray-100" to="/process">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-amber-700 rounded-lg">
+              <Wand2 size={32} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-100">Process a File</h3>
+              <p className="text-gray-400 text-sm">Trim, crop, merge, compress & more</p>
+            </div>
+          </div>
+        </Link>
+
+        {/* Jobs */}
         <Link className="card hover:shadow-lg transition-shadow cursor-pointer bg-gray-800 text-gray-100" to="/jobs">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-700 rounded-lg">
@@ -90,6 +106,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </Link>
+
       </div>
 
       {/* Recent Jobs */}
@@ -114,18 +131,22 @@ export default function DashboardPage() {
               <div key={job.id} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
                 <div className="flex-1">
                   <p className="font-medium">{job.input_filename}</p>
-                  <p className="text-sm text-gray-400">{job.input_format.toUpperCase()} → {job.output_format.toUpperCase()}</p>
+                  <p className="text-sm text-gray-400">
+                    {job.input_format.toUpperCase()} → {job.output_format.toUpperCase()}
+                  </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    job.status === 'completed'
-                      ? 'bg-green-600 text-gray-100'
-                      : job.status === 'processing'
-                      ? 'bg-blue-600 text-gray-100'
-                      : job.status === 'failed'
-                      ? 'bg-red-600 text-gray-100'
-                      : 'bg-yellow-600 text-gray-100'
-                  }`}>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      job.status === 'completed'
+                        ? 'bg-green-600 text-gray-100'
+                        : job.status === 'processing'
+                        ? 'bg-blue-600 text-gray-100'
+                        : job.status === 'failed'
+                        ? 'bg-red-600 text-gray-100'
+                        : 'bg-yellow-600 text-gray-100'
+                    }`}
+                  >
                     {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                   </span>
                   {job.status === 'completed' && (

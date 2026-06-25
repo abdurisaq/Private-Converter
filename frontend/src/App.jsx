@@ -11,7 +11,7 @@ import Layout from './components/Layout';
 import { LogOut, Settings, Home, Upload, FileText } from 'lucide-react';
 import ConvertPage from './pages/ConvertPage';
 import JobsPage from './pages/JobsPage';
-
+import ProcessingPage from './pages/ProcessingPage';
 function App() {
   const [count, setCount] = useState(0)
   const { access, refresh, user,logout } = useAuthStore();
@@ -43,9 +43,10 @@ function App() {
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/convert" element={<ConvertPage />} />
+        <Route path="/process" element={<ProcessingPage />} />
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />

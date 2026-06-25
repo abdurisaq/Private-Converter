@@ -123,22 +123,34 @@ def start_redis() -> Optional[subprocess.Popen]:
         return None
 
 def start_backend(python_exe: str, backend_dir: Path) -> Optional[subprocess.Popen]:
-    """Start Django development server (no blocking timeouts)"""
-    log_service("BACKEND", "Starting Django dev server...", "INFO")
+    """Start backend development server (FastAPI or Django depending on backend folder)"""
+    backend_type = "FastAPI" if backend_dir.name == "backend" else "Django"
+    log_service("BACKEND", f"Starting {backend_type} dev server...", "INFO")
 
     try:
-        process = subprocess.Popen(
-            [python_exe, "manage.py", "runserver", "0.0.0.0:8000"],
-            cwd=str(backend_dir),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,
-            env={**os.environ, "PYTHONUNBUFFERED": "1"}
-        )
+        if backend_dir.name == "backend":
+            process = subprocess.Popen(
+                [python_exe, "main.py"],
+                cwd=str(backend_dir),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                env={**os.environ, "PYTHONUNBUFFERED": "1"}
+            )
+        else:
+            process = subprocess.Popen(
+                [python_exe, "manage.py", "runserver", "0.0.0.0:8000"],
+                cwd=str(backend_dir),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                env={**os.environ, "PYTHONUNBUFFERED": "1"}
+            )
 
         # No waiting; let streaming thread handle logs
-        log_service("BACKEND", f"✓ Django dev server started (PID: {process.pid})", "SUCCESS")
+        log_service("BACKEND", f"✓ {backend_type} dev server started (PID: {process.pid})", "SUCCESS")
         return process
 
     except Exception as e:
@@ -224,7 +236,7 @@ def stream_process_output(process: subprocess.Popen, service_name: str, stop_eve
     except Exception:
         pass
 
-def print_summary(backend_port: int = 8000, frontend_port: int = 5173):
+def print_summary(backend_port: int = 8000, frontend_port: int = 5173, docs_path: str = "/docs", backend_name: str = "FastAPI Backend"):
     """Print stack summary"""
     print(f"\n{Colors.BOLD}{Colors.GREEN}")
     print("=" * 70)
@@ -234,18 +246,17 @@ def print_summary(backend_port: int = 8000, frontend_port: int = 5173):
     
     print(f"{Colors.BOLD}URLs:{Colors.RESET}")
     print(f"  Backend API:      {Colors.CYAN}http://127.0.0.1:{backend_port}/{Colors.RESET}")
-    print(f"  API Docs:         {Colors.CYAN}http://127.0.0.1:{backend_port}/api/schema/{Colors.RESET}")
+    print(f"  API Docs:         {Colors.CYAN}http://127.0.0.1:{backend_port}{docs_path}{Colors.RESET}")
     print(f"  Frontend:         {Colors.CYAN}http://localhost:{frontend_port}/{Colors.RESET}")
     
     print(f"{Colors.BOLD}Services:{Colors.RESET}")
-    print(f"  {Colors.GREEN}✓{Colors.RESET} Django Backend (PID: TBD)")
+    print(f"  {Colors.GREEN}✓{Colors.RESET} {backend_name} (PID: TBD)")
     print(f"  {Colors.GREEN}✓{Colors.RESET} React Frontend (PID: TBD)")
-    print(f"  {Colors.GREEN}✓{Colors.RESET} Celery Worker")
     print(f"  {Colors.GREEN}✓{Colors.RESET} Redis")
     
     print(f"\n{Colors.BOLD}Next Steps:{Colors.RESET}")
     print(f"  1. Open browser: {Colors.CYAN}http://localhost:{frontend_port}{Colors.RESET}")
-    print(f"  2. Create superuser: {Colors.YELLOW}python manage.py createsuperuser{Colors.RESET} (in new terminal)")
+    print(f"  2. Authenticate or register via the /auth endpoints on the backend")
     print(f"\n{Colors.BOLD}To Stop:{Colors.RESET}")
     print(f"  Press {Colors.YELLOW}Ctrl+C{Colors.RESET} to gracefully shutdown all services\n")
 
@@ -276,7 +287,7 @@ def main():
     print_header()
     
     project_root = get_project_root()
-    backend_dir = project_root / "backend"
+    backend_dir = project_root / "backend" if (project_root / "backend").exists() else project_root / "backendOLD"
     frontend_dir = project_root / "frontend"
     python_exe = get_venv_python()
     
@@ -327,17 +338,21 @@ def main():
         time.sleep(1)
         
         # Start Celery (optional)
-        if not args.no_celery:
+        if not args.no_celery and backend_dir.name != "backend":
             celery_proc = start_celery(python_exe, backend_dir)
             if celery_proc:
                 processes.append(celery_proc)
             else:
                 log_service("CELERY", "Failed to start Celery, continuing without it", "WARN")
+        elif backend_dir.name == "backend":
+            log_service("CELERY", "FastAPI backend uses internal job manager; Celery skipped", "INFO")
         
         time.sleep(1)
         
         # Print summary
-        print_summary()
+        docs_path = "/docs" if backend_dir.name == "backend" else "/api/schema/"
+        backend_name = "FastAPI Backend" if backend_dir.name == "backend" else "Django Backend"
+        print_summary(docs_path=docs_path, backend_name=backend_name)
         
         # Keep services running and stream output
         output_threads = []

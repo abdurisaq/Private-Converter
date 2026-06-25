@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Upload, FileUp, AlertCircle } from 'lucide-react';
 import { conversionApi } from '../utils/api';
 import toast from 'react-hot-toast';
@@ -7,11 +8,13 @@ export default function ConvertPage() {
   const [file, setFile] = useState(null);
   const [inputFormat, setInputFormat] = useState('');
   const [outputFormat, setOutputFormat] = useState('');
+  const navigate = useNavigate();
   const [formats, setFormats] = useState({});
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [queuedJobId, setQueuedJobId] = useState(null);
 
   useEffect(() => {
     fetchFormats();
@@ -65,10 +68,12 @@ export default function ConvertPage() {
     if (!outputFormat) return toast.error('Please specify output format');
 
     setUploading(true);
+    setQueuedJobId(null);
     try {
       const response = await conversionApi.upload(file, inputFormat, outputFormat);
-      const { jobId } = response.data;
-      toast.success('File uploaded! Check your jobs page for status.');
+      const jobId = response?.data?.jobId;
+      setQueuedJobId(jobId);
+      toast.success('Job queued successfully! Check the Jobs page for progress.');
 
       setFile(null);
       setInputFormat('');
@@ -223,6 +228,20 @@ export default function ConvertPage() {
             </>
           )}
         </button>
+
+        {queuedJobId && (
+          <div className="mt-4 p-4 bg-green-700/10 rounded-lg border border-green-500 text-green-100">
+            <p className="font-semibold">Job queued successfully.</p>
+            <p className="text-sm mt-1">Job ID: {queuedJobId}</p>
+            <button
+              type="button"
+              onClick={() => navigate('/jobs')}
+              className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded bg-green-600 hover:bg-green-500 text-white"
+            >
+              View Jobs
+            </button>
+          </div>
+        )}
       </form>
 
       {/* Info Box */}
